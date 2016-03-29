@@ -1,0 +1,8 @@
+* Overview
+Quantatively calculate chromosome instability index based on DNA copy number profiles.
+
+The CINdex package calculates the chromosome instability (CIN) index that allows to quantitatively characterize genome-wide DNA copy number alterations as a measure of chromosomal instability. It calculates not only overall genomic instability, but also instability in terms of copy number gains and losses separately at the chromosome and cytoband level.
+
+The algorithm and applications for this method is described in a paper (in preparation).
+
+

@@ -1,0 +1,305 @@
+---
+title: "Prepare input data for CINdex"
+output: 
+  pdf_document: 
+    fig_caption: yes
+    keep_tex: yes
+    number_sections: yes
+bibliography: biblio.bib 
+documentclass : article
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputnc}
+---
+# Introduction
+Genomic instability is known to be a fundamental trait in the development of tumors; and most human tumors exhibit this instability in structural and numerical alterations: deletions, amplifications, inversions or even losses and gains of whole chromosomes or chromosomes arms.
+
+To mathematically and quantitatively describe these alternations we first locate their genomic positions and measure their ranges. Such algorithms are referred to as __segmentation algorithms__. Bioconductor has several copy number segmentation algorithms including [-@A], [-@B], [-@C], [-@D], [-@E]. There are many copy number segmentation algorithms outside of Bioconductor as well, examples are Fused Margin Regression (FMR)[-@FMR] and Circular Binary Segmentation (CBS)[-@CBS]. 
+
+Segmentation results are typically have information about the start position and end position in the genome, and the segment value. The algorithms typically covers chromosomes 1 to 22 without any gaps, sometimes sex chromosomes are also included.
+
+# Preperation of input data for CINdex 
+
+## Segment data
+__The CINdex package can accept output from ANY segmentation algorithm__, as long as the data are in the form of a GRangesList object. 
+
+Note: The segmentation algorithms will use a __probe annotation file__ (that will contain location of the probes), and a __genome reference__ file to generate segmentation results. User must note the name and versions of these files, as the same files and versions are needed for CIN analysis. 
+
+The segment data used in this example was obtained by applying the Fused Margin Regression (FMR) algorithm to raw copy number and SNP data from Affymetrix SNP 6.0 platform that was on the hg18 human reference genome.
+
+The segment information is stored in form of a GRangesList, with one list element for each sample. 
+```{r, results='hide', message=FALSE}
+#source("http://bioconductor.org/biocLite.R")
+
+library(GenomicRanges)
+library(AnnotationHub)
+library(pd.genomewidesnp.6)
+library(rtracklayer)
+library(biovizBase) #needed for stain information
+library(CINdex)
+library(IRanges)
+```
+```{r seg}
+#Load example segment data into the workspace. 
+data("grl.data")
+#Examining the class of the object - GRangesList
+class(grl.data) 
+
+#Print first few rows
+head(grl.data)
+
+#The names of the list items in the GRangesList
+names(grl.data)
+
+# NOTE - The names of the list items in 'grl.data' must match the 
+# sample names in the clinical data input 'clin.crc'
+
+#Extracting segment information for the sample named "s4" shown as a GRanges object
+grl.data[["s4"]]  
+#You can see that each row in the GRanges object is a segment. The "value" columns shows the 
+#copy number value for that segment.
+
+
+```
+_The object to input into the package:_ `grl.data`
+
+__NOTE:__ At this time, the CINdex package can only accept segmentation data where probes are in the autosomes (Chromosome 1 - 22). Please remove segment data in the X, Y and mitochondrial chromosomes before input to CINdex.
+
+## Probe annotation file 
+Use the same platform annotation file used for the segmentation algorithm. The probe annotation file can be obtained in several ways:
+
+### Method 1 - Directly from Bioconductor 
+As an example, we show how to get probe annotation information from Affymetrix SNP 6.0 platform (on hg19 reference genome)
+```{r probeAnnotHg19, cache=TRUE}
+#connect to the underlying SQLite database that is part of the pd.genomewidesnp.6 package
+con <- db(pd.genomewidesnp.6)
+# get the copy number probes
+cnv <- dbGetQuery(con, "select man_fsetid, chrom, chrom_start, chrom_stop, 
+                  strand from featureSetCNV;")
+head(cnv, n =3) #print first few rows 
+#get the SNP probes
+snp <- dbGetQuery(con, "select man_fsetid, dbsnp_rs_id, chrom, physical_pos, 
+                  strand from featureSet;")
+head(snp, n=3)
+```
+Now that we have obtained the probe information, we convert it into a GRanges object
+```{r, cache=TRUE}
+#function to convert Copy number data into GRanges object
+convert.to.gr.cnv <- function(cnv2) {
+    cnv2$chrom <- paste0("chr", cnv2$chrom)
+    # subset out SNPs with missing location
+    cnv2 <- cnv2[!(is.na(cnv2$chrom) | is.na(cnv2$chrom_start)),]
+    # convert strand info to +,-,*
+    cnv2$strand[is.na(cnv2$strand)] <- 2
+    cnv2$strand <- cnv2$strand + 1
+    cnv2$strand <- c("+", "-", "*")[cnv2$strand]
+    #convert into GRanges object
+    cnv2.gr <- GRanges(cnv2$chrom, IRanges(cnv2$chrom_start,cnv2$chrom_stop), 
+                       cnv2$strand, ID = cnv2$man_fsetid)
+    return(cnv2.gr)
+}
+
+#function to convert SNP data into GRanges object
+convert.to.gr.snp <- function(snp2) {
+    
+    # make chromosomes the same as a chain file
+    snp2$chrom <- paste0("chr", snp2$chrom)
+    # subset out SNPs with missing location
+    snp2 <- snp2[!(is.na(snp2$chrom) | is.na(snp2$physical_pos)),]
+    # convert strand info to +,-,*
+    snp2$strand[is.na(snp2$strand)] <- 2
+    snp2$strand <- snp2$strand + 1
+    snp2$strand <- c("+", "-", "*")[snp2$strand]
+    snp2.gr <- GRanges(snp2$chrom, IRanges(snp2$physical_pos,snp2$physical_pos), 
+                       snp2$strand, ID = snp2$man_fsetid, 
+                       dbsnp = snp2$dbsnp_rs_id)
+    return(snp2.gr)
+}
+# convert this copy number data from into a GRanges object
+cnv.gr <- convert.to.gr.cnv(cnv2 = cnv) 
+head(cnv.gr, n=3)
+
+# convert this SNP data from into a GRanges object
+snp.gr <- convert.to.gr.snp(snp2 = snp)
+head(snp.gr, n=3)
+```
+Retain only those probes that are located in autosomes
+```{r, cache=TRUE}
+#subset only those probes that are in autosomes
+snpgr.19.auto <- subset(snp.gr, seqnames(snp.gr) %in% c("chr1", 
+                                                            "chr2", "chr3","chr4",
+                                                            "chr5", "chr6", "chr7", 
+                                                            "chr8", "chr9", "chr10", 
+                                                            "chr11", "chr12", "chr13", 
+                                                            "chr14", "chr15", "chr16",
+                                                            "chr17", "chr18","chr19", 
+                                                            "chr20", "chr21", "chr22"))
+
+#subset only those probes that are in autosomes
+cnvgr.19.auto <- subset(cnv.gr, seqnames(cnv.gr) %in% c("chr1", 
+                                                            "chr2", "chr3","chr4",
+                                                            "chr5", "chr6", "chr7", 
+                                                            "chr8", "chr9", "chr10", 
+                                                            "chr11", "chr12", "chr13", 
+                                                            "chr14", "chr15", "chr16",
+                                                            "chr17", "chr18","chr19", 
+                                                            "chr20", "chr21", "chr22"))
+
+#This gives a total of 1756096 probes (copy number and SNP) on this Affymetrix chip
+```
+The objects to input into the package : `cnvgr.19.auto` and `snpgr.19.auto`
+
+### Method 2 - Get file from Bioconductor (hg19) and convert into required format (hg18)
+The example segment data we have is from Affymetrix SNP 6.0 platform (on hg18 reference genome). To get this, we first download the probe annotation on hg19 platform, and convert the data into the hg18 version.
+```{r probeAnnotHg18, cache=TRUE}
+con <- db(pd.genomewidesnp.6)
+cnv2 <- dbGetQuery(con, "select man_fsetid, chrom, chrom_start, 
+                   chrom_stop, strand from featureSetCNV;")
+snp2 <- dbGetQuery(con, "select man_fsetid, dbsnp_rs_id, chrom, 
+                   physical_pos, strand from featureSet;")
+```
+Now that we have obtained the probe information, we convert it into a GRanges object using the functions shown above
+```{r, cache=TRUE}
+# convert this copy number data into a GRanges object
+cnv2gr <- convert.to.gr.cnv(cnv2 = cnv2) 
+head(cnv2gr, n=3)
+
+# convert this SNP data into a GRanges object
+snp2gr <- convert.to.gr.snp(snp2 = snp2)
+head(snp2gr, n=3)
+```
+Since our segment data was performed on the hg18 reference genome version, we need our annotations also to be on this reference version. We can use "liftOver" method for this.
+```{r, eval=FALSE}
+download.file("http://hgdownload.cse.ucsc.edu/gbdb/hg19/liftOver/hg19ToHg18.over.chain.gz",
+              "hg19ToHg18.over.chain.gz")
+system("gzip -d hg19ToHg18.over.chain.gz") ## have to decompress
+```
+```{r, cache=TRUE}
+## now use liftOver from rtracklayer, using the hg19ToHg18.over.chain from UCSC
+chain <- import.chain("hg19ToHg18.over.chain")
+snpgr.18 <- unlist(liftOver(snp2gr, chain))
+head(snpgr.18, n=3)
+
+cnvgr.18 <- unlist(liftOver(cnv2gr, chain))
+head(cnvgr.18, n=3)
+
+#subset only those probes that are in autosomes
+snpgr.18.auto <- subset(snpgr.18, seqnames(snpgr.18) %in% c("chr1", 
+                                                            "chr2", "chr3","chr4",
+                                                            "chr5", "chr6", "chr7", 
+                                                            "chr8", "chr9", "chr10", 
+                                                            "chr11", "chr12", "chr13", 
+                                                            "chr14", "chr15", "chr16",
+                                                            "chr17", "chr18","chr19", 
+                                                            "chr20", "chr21", "chr22"))
+
+#subset only those probes that are in autosomes
+cnvgr.18.auto <- subset(cnvgr.18, seqnames(cnvgr.18) %in% c("chr1", 
+                                                            "chr2", "chr3","chr4",
+                                                            "chr5", "chr6", "chr7", 
+                                                            "chr8", "chr9", "chr10", 
+                                                            "chr11", "chr12", "chr13", 
+                                                            "chr14", "chr15", "chr16",
+                                                            "chr17", "chr18","chr19", 
+                                                            "chr20", "chr21", "chr22"))
+
+#This gives us a total of 1756029 probes (about 1.7 million)
+
+#Save these objects for future
+#save(cnvgr.18.auto, file = "cnvgr.18.auto.RData")
+#save(snpgr.18.auto, file = "snpgr.18.auto.RData")
+```
+_The objects to input into the package:_ `cnvgr.18.auto` and `snpgr.18.auto`
+
+### Method 3 - Get annotation file from vendor website, and format it into a GRanges object
+In case an annotation file is not available through Bioconductor, one could download it from the vendor web site, and format the file as required. We have outlined the steps in brief.
+
+* download Annotation file from vendor website
+* format  file with following information
+    + All copy number probes: 
+        * Extract probe name, chromosome number, chromosome start , chromosome end location 
+        * Format as GRanges object
+    + All SNP probes: 
+        * include probe name, chromosome number and physical location
+        * Format as GRanges object
+
+## Reference genome
+As mentioned previously, the segment data used in this tutorial was done on the Human reference genome hg18. So we need to download this file. Note that this file must include both __cytoband__ information and __stain__ information. We use the ```biovizBase``` package for this.
+```{r refGen, message=FALSE, warning=FALSE}
+hg18.ucsctrack <- getIdeogram("hg18", cytoband = TRUE) 
+
+head(hg18.ucsctrack, n=3)
+#The user must ensure that the input object is a GRanges object
+
+#Save this object for future use 
+#save(hg18.ucsctrack, file = "hg18.ucsctrack.RData")
+
+#NOTE - To get the reference file for hg19, use the code below
+#hg19IdeogramCyto <- getIdeogram("hg19", cytoband = TRUE) 
+```
+_The objects to input into the package:_ `hg18.ucsctrack`
+
+## Clinical data
+The CINdex package allows users to compare the Chromosome CIN and Cytoband CIN values across two groups of patients - a typical use case in translational research studies. 
+
+The clinical data input used in the tutorial must have a matrix with two columns. The first column must have the sample ids ```"Sample"```, and the second column must have the group labels ```"Label"```.
+
+The example dataset consisits of 10 colon cancer patients, of which 5 had relapse (return of cancer to tumor site) and the rest did not relapse. This example dataset is part of the complete dataset used in our published paper [-@P], and can be accessed via G-DOC Plus <https://gdoc.georgetown.edu>[-@G].
+
+Load the example clinical data into the workspace.
+```{r Clin}
+data("clin.crc")
+
+# checking the class of the object
+class(clin.crc)
+
+# checking the structure
+str(clin.crc)
+
+#Let us examine the first five rows of this object
+head(clin.crc,5)
+
+# Look at sample names 
+clin.crc[,1]
+```
+Before you input your own clinical data into the CINdex package, ensure to format your data in this way. _Object to input into CINdex:_ ```clin.crc```
+
+NOTE - The names of the list items in the GRangesList ```grl.data``` must match the 
+sample names in the clinical data input i.e ```names(grl.data)``` must be same as ```clin.crc[,1]```
+
+## Gene annotation file
+Our CINdex package allows users to compare cytoband CIN values between two groups for patients (control vs case), a typical use case in translational research. Once we get the list of differentially changed cytobands, it would be interesting to see which genes fall in these cytoband regions.   
+
+To be able to use this function, a CDS gene annotation file is required. We show an example of how this file can be created using ```TxDb``` objects from UCSC.
+
+```{r,results='hide', message=FALSE}
+##biocLite("TxDb.Hsapiens.UCSC.hg18.knownGene")
+##biocLite("Homo.sapiens")
+library(TxDb.Hsapiens.UCSC.hg18.knownGene)
+library(Homo.sapiens)
+```
+```{r GeneAnn}
+# We will continue to use hg18 gene annotations in this tutorial.
+TxDb(Homo.sapiens) <- TxDb.Hsapiens.UCSC.hg18.knownGene
+z <- select(Homo.sapiens, keys(Homo.sapiens, "ENTREZID"),
+            c("CDSID","CDSCHROM","CDSSTRAND","CDSSTART","CDSEND","SYMBOL"), "ENTREZID")
+z1 <- na.omit(object = z) #remove NA values
+
+# extracting only the columns we want as a matrix
+geneAnno <- cbind(z1$CDSCHROM, z1$CDSSTRAND,  z1$CDSSTART, z1$CDSEND, z1$SYMBOL)
+colnames(geneAnno) <- c("chrom","strand", "cdsStart", "cdsEnd", "GeneName")
+
+#So this gene annotation file looks like this
+head(geneAnno, n=3)
+
+# Examining the class and structure of this oject
+class(geneAnno)
+str(geneAnno)
+
+#Save this object for future use 
+#save(geneAnno, file = "geneAnno.RData")
+```
+Before you input your own clinical data into the CINdex package, ensure to format your data in this way. _Object to input into CINdex:_ ```geneAnno```
+
+# References
