@@ -1,4 +1,4 @@
-%\VignetteIndexEntry{CINTutorial}
+%\VignetteIndexEntry{CINdex Tutorial}
 %\VignetteKeywords{chromosome instability index}
 %\VignettePackage{CINdex}
 \documentclass{article}
@@ -16,7 +16,6 @@
 
 %\usepackage{cacheSweave}
 %\VignetteEngine{knitr::knitr}
-%\VignetteIndexEntry{}
 %\usepackage{Sweave2knitr}
 
 %Import the natbib package and sets a bibliography style
@@ -44,6 +43,7 @@
 \begin{document}
 %\SweaveOpts{concordance=TRUE}
 %\SweaveOpts{concordance=TRUE}
+
 
 \title{Vignette for \Rpackage{CINdex} package}
 \author{\small{Lei Song, Krithika Bhuvaneshwar, Yue Wang*, Yuanjian Feng*,

@@ -8,7 +8,7 @@ output:
 bibliography: biblio.bib 
 documentclass : article
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{Prepare input data for CINdex}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputnc}
 ---
