@@ -1,6 +1,6 @@
 Package: CINdex
 Title: Chromosome Instability Index
-Version: 1.2.0
+Version: 1.3.0
 Authors@R: c(
     person(given ="Lei", family ="Song", , email ="polosong@gmail.com", role = c("aut"),comment="Innovation Center for Biomedical Informatics, Georgetown University Medical Center"),
     person(given ="Krithika", family ="Bhuvaneshwar", , email ="kb472@georgetown.edu", role = c("aut"),comment="Innovation Center for Biomedical Informatics, Georgetown University Medical Center"),
