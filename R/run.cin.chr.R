@@ -42,7 +42,7 @@ run.cin.chr <- function(grl.seg, out.folder.name = "output_chr_cin",
     #browser()
 
     #checking inputs
-    if(class(grl.seg)== "GRangesList") {
+    if(is(grl.seg, "GRangesList")) {
 
 
         if (length(thr.gain) == length(thr.loss)) {

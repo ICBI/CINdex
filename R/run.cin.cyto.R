@@ -50,7 +50,7 @@ run.cin.cyto <- function(grl.seg, cnvgr=NULL, snpgr=NULL, genome.ucsc,
                          V.mode = c("sum", "amp", "del"), chr.num = 22) {
     #browser()
 
-    if(class(grl.seg)== "GRangesList") {
+    if(is(grl.seg, "GRangesList")) {
 
         if((class(cnvgr)=="GRanges" || class(snpgr)=="GRanges") &&
            (class(genome.ucsc)=="GRanges" )) {
