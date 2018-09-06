@@ -74,8 +74,9 @@ Sys.setenv(TEXINPUTS=getwd(),
            BSTINPUTS=getwd())
 @
 <<setup2, include=TRUE, message=FALSE, warning=FALSE>>=
-#source("http://bioconductor.org/biocLite.R")
-#biocLite("CINdex")
+#if (!requireNamespace("BiocManager", quietly=TRUE))
+    #install.packages("BiocManager")
+#BiocManager::install("CINdex")
 library(CINdex)
 @
 
@@ -355,8 +356,9 @@ inputGenes <- unique(cytoband_genes[,"geneNames"])
 Convert gene symbols to Entrez Gene id
 <<message=FALSE, eval=FALSE>>=
 #Loading the package
-#source("http://bioconductor.org/biocLite.R")
-#biocLite("org.Hs.eg.db")
+#if (!requireNamespace("BiocManager", quietly=TRUE))
+    #install.packages("BiocManager")
+#BiocManager::install("org.Hs.eg.db")
 library(org.Hs.eg.db)
 ######
 entrez <- mapIds(x = org.Hs.eg.db,keys = inputGenes, keytype = "SYMBOL",
@@ -367,7 +369,7 @@ We now use the ReactomePA Bioconductor package for pathway enrichment.
 
 <<message=FALSE, eval=FALSE, y=TRUE>>=
 #Loading the package
-#biocLite("ReactomePA")
+#BiocManager::install("ReactomePA")
 library(ReactomePA)
 
 #Calling function to perform enrichment

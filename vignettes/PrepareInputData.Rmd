@@ -30,7 +30,8 @@ The segment data used in this example was obtained by applying the Fused Margin 
 
 The segment information is stored in form of a GRangesList, with one list element for each sample. 
 ```{r, results='hide', message=FALSE}
-#source("http://bioconductor.org/biocLite.R")
+#if (!requireNamespace("BiocManager", quietly=TRUE))
+    #install.packages("BiocManager")
 
 library(GenomicRanges)
 library(AnnotationHub)
@@ -274,8 +275,8 @@ Our CINdex package allows users to compare cytoband CIN values between two group
 To be able to use this function, a CDS gene annotation file is required. We show an example of how this file can be created using ```TxDb``` objects from UCSC.
 
 ```{r,results='hide', message=FALSE}
-##biocLite("TxDb.Hsapiens.UCSC.hg18.knownGene")
-##biocLite("Homo.sapiens")
+##BiocManager::install("TxDb.Hsapiens.UCSC.hg18.knownGene")
+##BiocManager::install("Homo.sapiens")
 library(TxDb.Hsapiens.UCSC.hg18.knownGene)
 library(Homo.sapiens)
 ```
