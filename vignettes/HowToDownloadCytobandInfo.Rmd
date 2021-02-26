@@ -1,0 +1,109 @@
+---
+title: "How to obtain Cytoband and Stain Information"
+output:
+  pdf_document: default
+  html_document: default
+documentclass : article
+vignette: >
+    %\VignetteIndexEntry{How to obtain Cytoband and Stain Information}
+    %\VignetteEngine{knitr::rmarkdown}
+    \usepackage[utf8]{inputnc}
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, results='hide', message=FALSE}
+#if (!requireNamespace("BiocManager", quietly=TRUE))
+    #install.packages("BiocManager")
+
+library(GenomicRanges)
+library(rtracklayer)
+library(biovizBase) #needed for stain information
+library(IRanges)
+library(R.utils)
+library(TxDb.Hsapiens.UCSC.hg18.knownGene)
+```
+
+# Introduction
+
+This document explains how to obtain the cytoband and stain information. The user must ensure that the input object is a GRanges object
+
+## Method 1 - Using ```rtracklayer``` package
+```{r, eval=FALSE}
+# create a query against a UCSC Table browser
+query <- rtracklayer::ucscTableQuery("hg18", "cytoBandIdeo")
+table1 <- rtracklayer::getTable(query) # retrieve table
+head(table1)
+
+#Add an extra column with strand information
+table1$Strand <- c("*") 
+
+## Convert object into GRanges object
+table1.gr <- GRanges(table1$chrom, 
+                    IRanges(table1$chromStart, table1$chromEnd),
+                    table1$Strand,
+                    table1$name, table1$gieStain)
+
+head(table1.gr, n = 3)
+
+#Save this object for future use 
+save(table1.gr, file = "hg18.ucsctrack.RData")
+
+#NOTE : For hg19, simply use "hg19" in query instead of "hg18"
+```
+
+## Method 2 - directly from UCSC Genome Browser
+This example shows how to download cytoband and stain information for hg18, and hg19 genomes from the UCSC Genome Browser
+```{r, eval=FALSE}
+# URL for hg18
+url <- "http://hgdownload.soe.ucsc.edu/goldenPath/hg18/database/cytoBand.txt.gz"
+
+#Download file and un-compress it
+download.file(url, destfile = "cyto.txt.gz")
+R.utils::gunzip("cyto.txt.gz")
+
+#Read in the downloaded cytoband ideogram txt file
+cyto1 <- read.table(file = "cyto.txt", 
+                    header = FALSE, sep = "\t")
+
+#Adding column names
+colnames(cyto1) <- c("Chrom", "Start", "End", "CytobandName", "Stain")
+
+#Add an extra column with strand information
+cyto1$Strand <- c("*")
+
+#The user must ensure that the input object is a GRanges object
+
+## Convert object into GRanges object
+cyto1.gr <- GRanges(cyto1$Chrom, 
+                    IRanges(cyto1$Start, cyto1$End),
+                    cyto1$Strand,
+                    cyto1$CytobandName, cyto1$Stain)
+
+head(cyto1.gr, n = 3)
+
+#The user must ensure that the input object is a GRanges object
+
+#Save this object for future use 
+save(cyto1.gr, file = "hg18.ucsctrack.RData")
+
+#NOTE : URL for hg19
+#url <- "http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/cytoBand.txt.gz"
+
+# URL FOR hg38
+#url <- "http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/cytoBand.txt.gz"
+```
+
+## Method 3 - Using ```biovizBase``` package
+```{r, eval=FALSE }
+hg18.ucsctrack <- biovizBase::getIdeogram("hg18", cytoband = TRUE) 
+
+head(hg18.ucsctrack, n=3)
+#The user must ensure that the input object is a GRanges object
+
+#Save this object for future use 
+save(hg18.ucsctrack, file = "hg18.ucsctrack.RData")
+```

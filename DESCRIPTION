@@ -1,6 +1,6 @@
 Package: CINdex
 Title: Chromosome Instability Index
-Version: 1.19.0
+Version: 1.19.1
 Authors@R: c(
     person(given ="Lei", family ="Song", , email ="polosong@gmail.com", role = c("aut"),comment="Innovation Center for Biomedical Informatics, Georgetown University Medical Center"),
     person(given ="Krithika", family ="Bhuvaneshwar", , email ="kb472@georgetown.edu", role = c("aut"),comment="Innovation Center for Biomedical Informatics, Georgetown University Medical Center"),
@@ -28,16 +28,13 @@ biocViews: Software, CopyNumberVariation, GenomicVariation, aCGH,
 Suggests: knitr, testthat, ReactomePA, RUnit, BiocGenerics,
         AnnotationHub, rtracklayer, pd.genomewidesnp.6, org.Hs.eg.db,
         biovizBase, TxDb.Hsapiens.UCSC.hg18.knownGene, methods,
-        Biostrings,Homo.sapiens
+        Biostrings,Homo.sapiens, R.utils
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2016-03-31 16:39:37 UTC; krithikabhuvaneshwar
-Author: Lei Song,
-    Krithika Bhuvaneshwar,
-	Yue Wang,
-    Yuanjian Feng,
-    Ie-Ming Shih,
-    Subha Madhavan,
-    Yuriy Gusev
-Maintainer: Yuriy Gusev <yg63@georgetown.edu>
-RoxygenNote: 5.0.1
+Packaged: 2020-10-27 22:14:28 UTC; biocbuild
+RoxygenNote: 7.1.1
+git_url: https://git.bioconductor.org/packages/CINdex
+git_branch: master
+git_last_commit: ce318c2
+git_last_commit_date: 2020-10-27
+Date/Publication: 2020-10-27
