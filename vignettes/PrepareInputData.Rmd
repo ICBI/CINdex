@@ -40,7 +40,6 @@ library(rtracklayer)
 library(biovizBase) #needed for stain information
 library(CINdex)
 library(IRanges)
-<<<<<<< HEAD
 library(TxDb.Hsapiens.UCSC.hg18.knownGene)
 library(Homo.sapiens)
 ```
@@ -49,12 +48,6 @@ library(Homo.sapiens)
 #Load example segment data into the workspace. 
 data("grl.data")
 
-=======
-```
-```{r seg}
-#Load example segment data into the workspace. 
-data("grl.data")
->>>>>>> upstream/master
 #Examining the class of the object - GRangesList
 class(grl.data) 
 
@@ -87,19 +80,14 @@ As an example, we show how to get probe annotation information from Affymetrix S
 #connect to the underlying SQLite database that is part of the pd.genomewidesnp.6 package
 con <- db(pd.genomewidesnp.6)
 # get the copy number probes
-<<<<<<< HEAD
-cnv <- dbGetQuery(con, "select man_fsetid, chrom, chrom_start, chrom_stop, strand from featureSetCNV;")
-head(cnv, n =3) #print first few rows 
-#get the SNP probes
-snp <- dbGetQuery(con, "select man_fsetid, dbsnp_rs_id, chrom, physical_pos, strand from featureSet;")
-=======
+
 cnv <- dbGetQuery(con, "select man_fsetid, chrom, chrom_start, chrom_stop, 
                   strand from featureSetCNV;")
 head(cnv, n =3) #print first few rows 
 #get the SNP probes
 snp <- dbGetQuery(con, "select man_fsetid, dbsnp_rs_id, chrom, physical_pos, 
                   strand from featureSet;")
->>>>>>> upstream/master
+
 head(snp, n=3)
 ```
 Now that we have obtained the probe information, we convert it into a GRanges object
@@ -194,10 +182,7 @@ download.file("http://hgdownload.cse.ucsc.edu/gbdb/hg19/liftOver/hg19ToHg18.over
               "hg19ToHg18.over.chain.gz")
 system("gzip -d hg19ToHg18.over.chain.gz") ## have to decompress
 ```
-<<<<<<< HEAD
 
-=======
->>>>>>> upstream/master
 ```{r, cache=TRUE}
 ## now use liftOver from rtracklayer, using the hg19ToHg18.over.chain from UCSC
 chain <- import.chain("hg19ToHg18.over.chain")
@@ -248,32 +233,19 @@ In case an annotation file is not available through Bioconductor, one could down
         * Format as GRanges object
 
 ## Reference genome
-<<<<<<< HEAD
-The segment data used in this tutorial was done on the Human reference genome hg18. Note that this file must include both __cytoband__ information and __stain__ information. Our document titled __How to obtain Cytoband and Stain Information__ contains information on how to create this object in the right format.
+
+As mentioned previously, the segment data used in this tutorial was done on the Human reference genome hg18. Note that this file must include both __cytoband__ information and __stain__ information. Our document titled __How to obtain Cytoband and Stain Information__ contains information on how to create this object in the right format.
 
 _The objects to input into the package:_ `hg18.ucsctrack`
 ```{r refGen, message=FALSE, warning=FALSE}
 data("hg18.ucsctrack")
-=======
-As mentioned previously, the segment data used in this tutorial was done on the Human reference genome hg18. So we need to download this file. Note that this file must include both __cytoband__ information and __stain__ information. We use the ```biovizBase``` package for this.
-```{r refGen, message=FALSE, warning=FALSE}
-hg18.ucsctrack <- getIdeogram("hg18", cytoband = TRUE) 
->>>>>>> upstream/master
 
 head(hg18.ucsctrack, n=3)
 #The user must ensure that the input object is a GRanges object
-
-<<<<<<< HEAD
 ```
-=======
-#Save this object for future use 
-#save(hg18.ucsctrack, file = "hg18.ucsctrack.RData")
 
-#NOTE - To get the reference file for hg19, use the code below
-#hg19IdeogramCyto <- getIdeogram("hg19", cytoband = TRUE) 
-```
 _The objects to input into the package:_ `hg18.ucsctrack`
->>>>>>> upstream/master
+
 
 ## Clinical data
 The CINdex package allows users to compare the Chromosome CIN and Cytoband CIN values across two groups of patients - a typical use case in translational research studies. 
